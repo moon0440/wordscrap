@@ -11,7 +11,7 @@ import sys
 import time
 
 
-matching_pct = 0.95
+matching_pct = 0.97
 gettrace = getattr(sys, 'gettrace', None)
 SHOW = gettrace
 SHOW = False
@@ -50,15 +50,15 @@ def scrn_shot(region):
     letters = []
     force_restart = False
     # org_img = d.screenshot(region=region).reduce(3)
-    org_img = Image.fromarray(d.screenshot(region=region))
-    img = np.array(org_img)
+    org_img = Image.fromarray(d.screenshot(region=region)) #1
+    img = np.array(org_img) #2
 
     # White Letters to Black
     if len(img[img == 255]) > len(img[img == 0]):
         img[img == 255] = 0
     img[img > 0] = 255
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) #3
     # gray = img
     if SHOW:
         cv2.imshow('gray', gray)

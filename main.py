@@ -12,24 +12,13 @@ import sys
 
 from screenshot_v2 import GameWin
 
-word_file = 'words.pkl'
-if not Path(word_file).exists():
-    all_words = nltk.corpus.brown.words() + nltk.corpus.words.words() + nltk.corpus.abc.words()
-    # english_vocab1 = list(w.upper() for w in all_words)
-    english_vocab = set(w.upper() for w in all_words)
-    with open(word_file, 'wb') as handle:
-        pickle.dump(english_vocab, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-with open(word_file, 'rb') as handle:
-    english_vocab = pickle.load(handle)
-
-up_left_x = 82
-up_left_y = 520
-box_size = 285
-region = (up_left_x, up_left_y, up_left_x + box_size, up_left_y + box_size)
-# fn = lambda x: 0 if x > thresh else 255
-thresh = 10
-fn = lambda x: 0 if x < thresh else 255
+# up_left_x = 82
+# up_left_y = 520
+# box_size = 285
+# region = (up_left_x, up_left_y, up_left_x + box_size, up_left_y + box_size)
+# # fn = lambda x: 0 if x > thresh else 255
+# thresh = 10
+# fn = lambda x: 0 if x < thresh else 255
 # e = enchant.Dict("en_US")
 spell = SpellChecker()
 
@@ -50,6 +39,11 @@ def solve_words(words, letter_pos, gw):
             cur_pos = next((index for (index, d) in enumerate(letter_pos) if d["letter"] == l and index not in pos_used), None)
             pos_used.append(cur_pos)
             pyautogui.moveTo(letter_pos[cur_pos]['x'], letter_pos[cur_pos]['y'], duration=0.05)
+            if not pyautogui.position().x == letter_pos[cur_pos]['x']:
+                raise Exception("Mouse Moved: Forcing Exit")
+            if not pyautogui.position().y == letter_pos[cur_pos]['y']:
+                raise Exception("Mouse Moved: Forcing Exit")
+
             if len(pos_used) == 1:
                 pyautogui.mouseDown(button='left')
         pyautogui.mouseUp(button='left')
@@ -86,16 +80,24 @@ def main():
     gw = GameWin()
     while True:
         while gw.select_menu_templates():
-            sleep(1)
+            sleep(4)
+
 
         # start_level()
-        restart = True
-        while restart:
-            letter_pos, restart = scrn_shot(region)
-            if gw.select_menu_templates(click=False):
-                break
-        words = possible_words(letter_pos)
-        solve_words(words, letter_pos, gw)
+        # restart = True
+        while not gw.select_menu_templates(click=False):
+            # letter_pos, restart = scrn_shot(region)
+            # if gw.select_menu_templates(click=False):
+            #     break
+            letter_pos, restart = gw.letter_boxes()
+
+            if letter_pos:
+                words = possible_words(letter_pos)
+                solve_words(words, letter_pos, gw)
+            sleep(4.0)
+
+        # while :
+        #     sleep(4)
         # while not gw.select_menu_templates():
         #     sleep(1)
 
