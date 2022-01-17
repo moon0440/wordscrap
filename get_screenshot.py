@@ -16,7 +16,7 @@ gettrace = getattr(sys, 'gettrace', None)
 SHOW = gettrace
 SHOW = False
 # SHOW = True
-d = d3dshot.create()
+d = d3dshot.create(capture_output="numpy")
 net = cv2.dnn.readNet('frozen_east_text_detection.pb')
 img_path = './letter_images/'
 letter_base_images = {}
@@ -50,9 +50,16 @@ def scrn_shot(region):
     letters = []
     force_restart = False
     # org_img = d.screenshot(region=region).reduce(3)
-    org_img = d.screenshot(region=region)
+    org_img = Image.fromarray(d.screenshot(region=region))
     img = np.array(org_img)
+
+    # White Letters to Black
+    if len(img[img == 255]) > len(img[img == 0]):
+        img[img == 255] = 0
+    img[img > 0] = 255
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # gray = img
     if SHOW:
         cv2.imshow('gray', gray)
 
@@ -70,8 +77,9 @@ def scrn_shot(region):
 
         roi = img[y+pad:y + h+pad, x+pad:x + w+pad]
 
-        if h > 30 and SHOW:
-            print(w,h)
+        # if h > 30 and SHOW:
+        #     print(w,h)
+
         # if 52 < h < 65: # for 5 chars
         if 47 <= h < 52: # for 6 chars
             w_diff = 55 - w
@@ -81,6 +89,7 @@ def scrn_shot(region):
             y = y - math.floor(h_diff / 2)
             h = 55
             # print(x, w, y, h)
+            # Image.fromarray(img).convert("L")
             rect = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
             if SHOW:
                 cv2.imshow('rect', rect)

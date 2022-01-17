@@ -5,9 +5,12 @@ from itertools import permutations
 from time import sleep
 from pathlib import Path
 import enchant
+from spellchecker import SpellChecker
 
 from get_screenshot import go_again, scrn_shot
 import sys
+
+from screenshot_v2 import GameWin
 
 word_file = 'words.pkl'
 if not Path(word_file).exists():
@@ -27,16 +30,19 @@ region = (up_left_x, up_left_y, up_left_x + box_size, up_left_y + box_size)
 # fn = lambda x: 0 if x > thresh else 255
 thresh = 10
 fn = lambda x: 0 if x < thresh else 255
-e = enchant.Dict("en_US")
+# e = enchant.Dict("en_US")
+spell = SpellChecker()
 
 def solve_word(letter_pos):
     for k, v in letter_pos.items():
         pyautogui.moveTo(v['x'], v['y'], duration=1)
 
 
-def solve_words(words, letter_pos, starting_img):
+def solve_words(words, letter_pos, gw):
     for i,w in enumerate(words):
         sleep(0.25)
+        if gw.select_menu_templates(click=False):
+            break
         print(f"Solving {i}/{len(words)} possible words -> {w}")
         pos_used = []
 
@@ -66,7 +72,9 @@ def possible_words(letter_pos):
     words = []
     for l in range(len(st),2,-1):
         st_perms = [''.join(i).upper() for i in permutations(st, l)]
-        new_words = [w for w in st_perms if e.check(w)]
+        # new_words = [w for w in st_perms if e.check(w)]
+        new_words = [w.upper() for w in spell.known(st_perms)]
+
         words.extend(new_words)
         # english_vocab = set(w.upper() for w in all_words)
         # words.extend(english_vocab.intersection(st_perms))
@@ -75,14 +83,21 @@ def possible_words(letter_pos):
 
 
 def main():
+    gw = GameWin()
     while True:
-        start_level()
+        while gw.select_menu_templates():
+            sleep(1)
+
+        # start_level()
         restart = True
         while restart:
             letter_pos, restart = scrn_shot(region)
+            if gw.select_menu_templates(click=False):
+                break
         words = possible_words(letter_pos)
-        solve_words(words, letter_pos, None)
-        next_level()
+        solve_words(words, letter_pos, gw)
+        # while not gw.select_menu_templates():
+        #     sleep(1)
 
 
 
